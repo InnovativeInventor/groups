@@ -4,12 +4,19 @@ import itertools
 import copy
 from pydantic import BaseModel
 
-class AbstractGroup():
+
+class AbstractGroup:
     """
     Finite groups represented as generators and rewrite rules.
     """
-    def __init__(self, generators: Dict[str, int] = {"a": 2, "b": 8},
-                 rewrite: List[Tuple[Tuple[str, int]]] = {(("b", 1), ("a", 1)): (("a", 1), ("b", 7))}):
+
+    def __init__(
+        self,
+        generators: Dict[str, int] = {"a": 2, "b": 8},
+        rewrite: List[Tuple[Tuple[str, int]]] = {
+            (("b", 1), ("a", 1)): (("a", 1), ("b", 7))
+        },
+    ):
         """
         Generators are a list of tuples of some form:
         [("a", 2), ("b", 8)]
@@ -27,7 +34,9 @@ class AbstractGroup():
             else:
                 self.ordering[prev_key] = key
 
-    def multiply(self, a: List[Tuple[str, int]], b: List[Tuple[str, int]]) -> List[Tuple[str, int]]:
+    def multiply(
+        self, a: List[Tuple[str, int]], b: List[Tuple[str, int]]
+    ) -> List[Tuple[str, int]]:
         """
         The binary operator equipped with the group
         """
@@ -47,7 +56,7 @@ class AbstractGroup():
         Recursively apply the rewrite rules until it is in a normal form.
         """
         ordered = False
-        while (len(term) > len(self.generators) or not ordered):
+        while len(term) > len(self.generators) or not ordered:
             expanded_term = self._expand_terms(term)
 
             new_term = []
@@ -57,13 +66,18 @@ class AbstractGroup():
                     prev_generator = generator
                     new_term.append((generator, power))
                 else:
-                    if (generator == prev_generator) or (prev_generator in self.ordering and generator == self.ordering[prev_generator]):
-                        new_term.append((generator, power)) # all is well
+                    if (generator == prev_generator) or (
+                        prev_generator in self.ordering
+                        and generator == self.ordering[prev_generator]
+                    ):
+                        new_term.append((generator, power))  # all is well
                     else:
                         ordered = False
-                        substitue_term = self.rewrite[((prev_generator, 1), (generator, 1))]
+                        substitue_term = self.rewrite[
+                            ((prev_generator, 1), (generator, 1))
+                        ]
 
-                        new_term.pop() # remove last elm
+                        new_term.pop()  # remove last elm
                         new_term.extend(list(substitue_term))
 
                 prev_generator = generator
@@ -78,7 +92,7 @@ class AbstractGroup():
         """
         new_term = []
         for generator, power in term:
-            new_term.extend([(generator, 1)]*power)
+            new_term.extend([(generator, 1)] * power)
 
         return new_term
 
@@ -91,7 +105,7 @@ class AbstractGroup():
 
         for generator, power in term:
             if count > 0:
-                if generator == prev_generator: # like term discovered
+                if generator == prev_generator:  # like term discovered
                     prev_power += power
                     continue
                 else:
@@ -116,7 +130,7 @@ class AbstractGroup():
             if self.generators[generator] != 0:
                 if power % self.generators[generator] != 0:
                     new_term.append((generator, power % self.generators[generator]))
-            else: # only if generator's order is not known
+            else:  # only if generator's order is not known
                 new_term.append((generator, power))
 
         return new_term
@@ -163,8 +177,12 @@ class AbstractGroup():
         while prev_size != len(self.elements):
             prev_size = len(self.elements)
             for left_elm, right_elm in itertools.product(self.elements, self.elements):
-                if (not self.check_identity(left_elm)) and (not self.check_identity(right_elm)):
-                    new_elm = self.normalize(self.normalize(self.multiply(list(left_elm), list(right_elm))))
+                if (not self.check_identity(left_elm)) and (
+                    not self.check_identity(right_elm)
+                ):
+                    new_elm = self.normalize(
+                        self.normalize(self.multiply(list(left_elm), list(right_elm)))
+                    )
 
                     for each_elm in self.elements:
                         if self.compare(new_elm, each_elm):
