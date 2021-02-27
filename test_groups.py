@@ -21,3 +21,7 @@ def test_normalize_group_1():
 
     group = AbstractGroup()
     assert group.normalize(test_case) == [("b", 5)]
+
+def test_normalize_enmuerate():
+    group = AbstractGroup()
+    assert group.enumerate()

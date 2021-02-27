@@ -4,10 +4,10 @@ import itertools
 import copy
 from pydantic import BaseModel
 
-class AbstractTerm(BaseModel): # deprecated
-    element: List[Tuple[str, int]]
-
 class AbstractGroup():
+    """
+    Finite groups represented as generators and rewrite rules.
+    """
     def __init__(self, generators: Dict[str, int] = {"a": 2, "b": 8},
                  rewrite: List[Tuple[Tuple[str, int]]] = {(("b", 1), ("a", 1)): (("a", 1), ("b", 7))}):
         """
