@@ -4,8 +4,8 @@ Work in progress.
 This is probably not the best way to represent groups, but whatever.
 Contributions are welcome.
  
-## Example (d_16)
-The group `d_16` can be represented like so
+## Example (D_16)
+The group `D_16` can be represented like so
 ```
 a^2 = e
 b^8 = e
