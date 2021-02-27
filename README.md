@@ -1,5 +1,5 @@
 ## Groups
-Representing certain kinds of finite in terms of generators and rewrite rules. 
+Representing certain kinds of finite groups in terms of generators and rewrite rules. 
 Work in progress. 
 This is probably not the best way to represent groups, but whatever.
 Contributions are welcome.
