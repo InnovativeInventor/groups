@@ -12,5 +12,12 @@ if __name__ == "__main__":
 
     # Enumerate subgroups
     subgroups = group.enumerate_subgroups()
+    print("\nEnumerating subgroups")
     for each_subgroup in subgroups:
-        print(each_subgroup.enumerate(sub=True))
+        print(each_subgroup.enumerate())
+
+    # Enumerating normal subgroups
+    print("\nEnumerating normal subgroups")
+    for each_subgroup in subgroups:
+        if group.is_normal_subgroup(each_subgroup):
+            print(each_subgroup.enumerate())

@@ -16,7 +16,7 @@ class AbstractGroupDef:
         generators: Dict[str, int] = {("a", 1): 2, ("b", 1): 8},
         rewrite: List[Tuple[Tuple[str, int]]] = {
             (("b", 1), ("a", 1)): (("a", 1), ("b", 7))
-        },
+        }, sub = False
     ):
         """
         Generators are a list of tuples of some form:
@@ -26,6 +26,7 @@ class AbstractGroupDef:
         self.generators = generators
         self.rewrite = rewrite
         self.elements = []
+        self.sub = sub
 
         self.ordering = {} # might want to make this an arg
         for count, key in enumerate(self.generators.keys()):
@@ -34,46 +35,28 @@ class AbstractGroupDef:
             else:
                 self.ordering[prev_key] = key[0]
 
-    def __eq__(self, other) -> bool:
-        if len(self.generators.keys()) != len(self.generators.keys()):
-            return False
-
-        for each_key in self.generators.keys():
-            try:
-                if self.generators[each_key] != other.generators[each_key]:
-                    return False
-            except:
-                return False
-
-        for each_key in self.rewrite.keys():
-            try:
-                if self.rewrite[each_key] != other.rewrite[each_key]:
-                    return False
-            except:
-                return False
-
-
-        if collections.Counter(self.enumerate()) == collections.Counter(other.enumerate()):
-            return True
-
-        return False
-
     def multiply(
         self, a: List[Tuple[str, int]], b: List[Tuple[str, int]]
     ) -> List[Tuple[str, int]]:
         """
         The binary operator equipped with the group
         """
-        a.extend(b)
-        return a
+        term = copy.deepcopy(a)
+        term.extend(b)
+        return self.normalize(term)
 
     def pow(self, term: List[Tuple[str, int]], power: int) -> List[Tuple[str, int]]:
         orig_term = copy.deepcopy(term)
 
-        for i in range(1, power):
-            term = self.normalize(self.multiply(orig_term, term))
+        if power == 0:
+            return []
+        elif power == 1:
+            return self.normalize(term)
 
-        return term
+        for i in range(1, power):
+            term = self.normalize(self.multiply(copy.deepcopy(orig_term), term))
+
+        return self.normalize(term)
 
     def normalize(self, term: List[Tuple[str, int]]) -> List[Tuple[str, int]]:
         """
@@ -225,10 +208,38 @@ class AbstractGroupDef:
                 else:
                     self.elements.append(self.normalize(new_elm))
 
+
 class AbstractGroup(AbstractGroupDef):
     """
     Higher order group functions
     """
+    def __eq__(self, other) -> bool:
+        if len(self.generators.keys()) != len(self.generators.keys()):
+            return False
+
+        for each_key in self.generators.keys():
+            try:
+                if self.generators[each_key] != other.generators[each_key]:
+                    return False
+            except:
+                return False
+
+        for each_key in self.rewrite.keys():
+            try:
+                if self.rewrite[each_key] != other.rewrite[each_key]:
+                    return False
+            except:
+                return False
+
+
+        if len(other.enumerate()) != len(self.enumerate()):
+            return False
+
+        for each_elm in self.enumerate():
+            if not other.contains(each_elm):
+                return False
+
+        return True
 
     def order(self, term: List[Tuple[str, int]]) -> int:
         """
@@ -244,14 +255,21 @@ class AbstractGroup(AbstractGroupDef):
 
         return order
 
-    def enumerate(self, sub = False, remove_dups = True) -> List[List[Tuple[str, int]]]:
+    def inverse(self, term: List[Tuple[str, int]]) -> List[Tuple[str, int]]:
+        """
+        Finds the inverse of an element
+        """
+        order = self.order(term)
+        return self.normalize(self.pow(term, order-1))
+
+    def enumerate(self, remove_dups = True) -> List[List[Tuple[str, int]]]:
         """
         Enumerate all elements. Returns a list of all elements.
         """
         prev_size = -1
 
         self.elements.append([]) # identity!
-        if not sub: # get the full group
+        if not self.sub: # get the full group
             for generator, power in self.generators.keys():
                 self.elements.append([(generator, power)])
 
@@ -264,6 +282,21 @@ class AbstractGroup(AbstractGroupDef):
             self.remove_dups()
 
         return self.elements
+
+    def contains(self, term: List[Tuple[str, int]], cache=True) -> bool:
+        """
+        Membership function equipped with the group/set.
+        """
+        if cache:
+            for each_elm in self.elements: # TODO: speedup and prefer enumerate
+                if self.compare(each_elm, term):
+                    return True
+        else:
+            for each_elm in self.enumerate():
+                if self.compare(each_elm, term):
+                    return True
+
+        return False
 
     def remove_dups(self):
         """
@@ -284,27 +317,94 @@ class AbstractGroup(AbstractGroupDef):
 
     def enumerate_subgroups(self) -> list:
         """
-        Currently broken
+        Enumerates all subgroups, including the identity subgroup
         """
         subgroups = []
         for each_elm in self.enumerate():
             normal_elm = self.normalize(each_elm)
-            seen = False
-            for each_subgroup in subgroups: # check if already seen
-                for each_subgroup_elm in each_subgroup.enumerate(sub=True, remove_dups=True):
-                    if self.compare(normal_elm, self.normalize(each_subgroup_elm)):
-                        seen = True
-                # if seen:
-                #     break
+            # seen = False
+            # for each_subgroup in subgroups: # check if already seen
+            #     for each_subgroup_elm in each_subgroup.enumerate():
+            #         if self.compare(normal_elm, self.normalize(each_subgroup_elm)):
+            #             seen = True
+            #     # if seen:
+            #     #     break
 
-            if seen:  # skip if identity as well
-                continue
+            # if seen:
+            #     continue
 
             # Construct subgroup
-            subgroup = AbstractGroup(copy.deepcopy(self.generators), copy.deepcopy(self.rewrite))
+            subgroup = AbstractGroup(copy.deepcopy(self.generators), copy.deepcopy(self.rewrite), sub=True)
             subgroup.elements = [normal_elm]
 
-            subgroups.append(subgroup)
+            for each_subgroup in subgroups:
+                if each_subgroup == subgroup:
+                    break
+            else:
+                subgroups.append(subgroup)
             # breakpoint()
 
         return subgroups
+
+    def enumerate_conjugacy_classes(self) -> list:
+        """
+        Enumerates all distinct conjugacy classes
+        """
+        conjugacy_classes = []
+        self.enumerate()
+        for each_elm in self.elements:
+            conjugacy_class = []
+            for other_elm in self.elements:
+                seen = False
+                unique = True
+                conjugated_elm = self.conjugate(each_elm, other_elm)
+
+                # Check if we've seen the elm before
+                for each_seen_term in itertools.chain.from_iterable(conjugacy_classes):
+                    if self.compare(conjugated_elm, each_seen_term):
+                        seen = True
+                        break
+                else:
+                    for each_seen_term in conjugacy_class: # maybe combine this
+                        if self.compare(conjugated_elm, each_seen_term):
+                            unique = False
+                            break
+
+
+                if seen:
+                    break
+                elif unique:
+                    conjugacy_class.append(conjugated_elm)
+
+            if seen:  # since conjugacy classes partition
+                continue
+            else:
+                print(conjugacy_class)
+                conjugacy_classes.append(conjugacy_class)
+
+        return conjugacy_classes
+
+    def conjugate(self, a: List[Tuple[str, int]], b: List[Tuple[str, int]]) -> List[Tuple[str, int]]:
+        """
+        Conjugates a by b. Returns bab^-1.
+        """
+        return self.normalize(self.multiply(b, self.multiply(a, self.inverse(b))))
+
+    def is_normal_subgroup(self, subgroup) -> bool:
+        """
+        Calculates if subgroup is normal. subgroup should be an instance of AbstractGroup.
+        """
+        if not (subgroup.sub is True and self.sub is False):
+            raise ValueError("You need to call is_normal_subgroup on a group and pass a subgroup!")
+
+        normal = True
+        for each_elm in subgroup.enumerate():
+            for other_elm in self.enumerate():
+                if subgroup.contains(self.conjugate(each_elm, other_elm)) is False:
+                    normal = False
+                    break
+
+            if normal is False:
+                break
+
+        return normal
