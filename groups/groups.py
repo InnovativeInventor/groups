@@ -3,16 +3,17 @@ from typing import List, Tuple, Dict
 import itertools
 import copy
 from pydantic import BaseModel
+import collections
 
 
-class AbstractGroup:
+class AbstractGroupDef:
     """
     Finite groups represented as generators and rewrite rules.
     """
 
     def __init__(
         self,
-        generators: Dict[str, int] = {"a": 2, "b": 8},
+        generators: Dict[str, int] = {("a", 1): 2, ("b", 1): 8},
         rewrite: List[Tuple[Tuple[str, int]]] = {
             (("b", 1), ("a", 1)): (("a", 1), ("b", 7))
         },
@@ -23,16 +24,40 @@ class AbstractGroup:
         Rewrite rules are for rewriting/reducing expressions.
         """
         self.generators = generators
-        self.elm_ordering = list(self.generators.keys())
+        self.elm_ordering = list([x[0] for x in self.generators.keys()])
         self.rewrite = rewrite
         self.elements = []
 
         self.ordering = {}
         for count, key in enumerate(self.generators.keys()):
             if count == 0:
-                prev_key = key
+                prev_key = key[0]
             else:
-                self.ordering[prev_key] = key
+                self.ordering[prev_key] = key[0]
+
+    def __eq__(self, other) -> bool:
+        if len(self.generators.keys()) != len(self.generators.keys()):
+            return False
+
+        for each_key in self.generators.keys():
+            try:
+                if self.generators[each_key] != other.generators[each_key]:
+                    return False
+            except:
+                return False
+
+        for each_key in self.rewrite.keys():
+            try:
+                if self.rewrite[each_key] != other.rewrite[each_key]:
+                    return False
+            except:
+                return False
+
+
+        if collections.Counter(self.enumerate()) == collections.Counter(other.enumerate()):
+            return True
+
+        return False
 
     def multiply(
         self, a: List[Tuple[str, int]], b: List[Tuple[str, int]]
@@ -121,15 +146,20 @@ class AbstractGroup:
 
         return new_term
 
+    def _get_generator_order(self, generator):
+        for each_generator, power in self.generators.keys():
+            if generator == each_generator:
+                return power*self.generators[(each_generator, power)]
+
     def _reduce_term_exp(self, term: List[Tuple[str, int]]) -> List[Tuple[str, int]]:
         """
         Reduces the term exponent to be most simple/smallest possible.
         """
         new_term = []
         for generator, power in term:
-            if self.generators[generator] != 0:
-                if power % self.generators[generator] != 0:
-                    new_term.append((generator, power % self.generators[generator]))
+            if self._get_generator_order(generator) != 0:
+                if power % self._get_generator_order(generator) != 0:
+                    new_term.append((generator, power % self._get_generator_order(generator)))
             else:  # only if generator's order is not known
                 new_term.append((generator, power))
 
@@ -142,6 +172,13 @@ class AbstractGroup:
         a_normalized = self.normalize(a)
         b_normalized = self.normalize(b)
 
+
+        # if collections.Counter(a_normalized) == collections.Counter(b_normalized):
+        #     return True
+        # else:
+        #     return False
+
+        # Alternate naive implementation
         if len(a_normalized) != len(b_normalized):
             return False
 
@@ -156,38 +193,90 @@ class AbstractGroup:
         Check if a term is equal to the identity
         """
         for generator, power in term:
-            if power != 0 and power % self.generators[generator] != 0:
+            if power != 0 and power % self._get_generator_order(generator) != 0:
                 return False
         return True
 
-    def print(self, term: List[Tuple[str, int]]):
+    def format(self, term: List[Tuple[str, int]]):
+        if len(term) == 0:
+            return "e"
+
+        representation = ""
         for generator, power in term:
             if power:
-                print(f"{generator}^{power}", end="")
-        print()
+                representation += f"{generator}^{power}"
 
-    def enumerate(self):
+        return representation
+
+    def _close_group(self):
         """
-        Enumerate all elements
+        Tries to get the rest of the elements in the group by one round of closure (i.e. multiplying everything together)
+        """
+        for left_elm, right_elm in itertools.product(self.elements, self.elements):
+            if (not self.check_identity(left_elm)) and (
+                not self.check_identity(right_elm)
+            ):
+                new_elm = self.normalize(
+                    self.normalize(self.multiply(list(left_elm), list(right_elm)))
+                )
+
+                for each_elm in self.elements:
+                    if self.compare(new_elm, each_elm):
+                        break
+                else:
+                    self.elements.append(new_elm)
+
+class AbstractGroup(AbstractGroupDef):
+    """
+    Higher order group functions
+    """
+
+    def order(self, term: List[Tuple[str, int]]) -> int:
+        """
+        Find the order of an element in a group
+        """
+        starting_term = self.normalize(copy.deepcopy(term))
+
+        term = self.normalize(self.multiply(term, starting_term))
+        order = 1
+        while term != starting_term:
+            term = self.normalize(self.multiply(term, starting_term))
+            order += 1
+
+        return order
+
+    def enumerate(self) -> List[List[Tuple[str, int]]]:
+        """
+        Enumerate all elements. Returns a list of all elements.
         """
         prev_size = -1
-        for generator in self.generators.keys():
-            self.elements.append([(generator, 1)])
+
+        self.elements.append([]) # identity!
+        for generator, power in self.generators.keys():
+            self.elements.append([(generator, power)])
 
         while prev_size != len(self.elements):
             prev_size = len(self.elements)
-            for left_elm, right_elm in itertools.product(self.elements, self.elements):
-                if (not self.check_identity(left_elm)) and (
-                    not self.check_identity(right_elm)
-                ):
-                    new_elm = self.normalize(
-                        self.normalize(self.multiply(list(left_elm), list(right_elm)))
-                    )
+            self._close_group()
+        self._close_group()
 
-                    for each_elm in self.elements:
-                        if self.compare(new_elm, each_elm):
-                            break
-                    else:
-                        self.elements.append(new_elm)
+
+        # Remove dups, horribly inefficient
+        dups_exist = True
+        while dups_exist:
+            dups_exist = False
+            for i, each_term in enumerate(self.elements):
+                for j, other_term in enumerate(self.elements):
+                    if i != j and self.compare(each_term, other_term):
+                        dups_exist = True
+                        break
+
+                if dups_exist:
+                    del self.elements[i]
+                    break
 
         return self.elements
+
+    # def enumerate_subgroups(self) -> List[AbstractGroup]:
+    #     for each_elm in self.enumerate():
+    #         if

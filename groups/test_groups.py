@@ -1,4 +1,4 @@
-from groups import AbstractGroup
+from groups.groups import AbstractGroup
 
 
 def test_combine_rules_1():
@@ -27,6 +27,11 @@ def test_normalize_group_1():
     assert group.normalize(test_case) == [("b", 5)]
 
 
-def test_normalize_enmuerate():
+def test_enmuerate():
     group = AbstractGroup()
     assert group.enumerate()
+
+def test_order_a_b():
+    group = AbstractGroup()
+    assert group.order([("a", 1)]) == 2
+    assert group.order([("b", 1)]) == 8

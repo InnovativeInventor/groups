@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "groups"
+version = "0.1.0"
+description = ""
+authors = ["Max Fan <theinnovativeinventor@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+sympy = "^1.7.1"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
