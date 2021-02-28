@@ -16,7 +16,8 @@ class AbstractGroupDef:
         generators: Dict[str, int] = {("a", 1): 2, ("b", 1): 8},
         rewrite: List[Tuple[Tuple[str, int]]] = {
             (("b", 1), ("a", 1)): (("a", 1), ("b", 7))
-        }, sub = False
+        },
+        sub=False,
     ):
         """
         Generators are a list of tuples of some form:
@@ -28,7 +29,7 @@ class AbstractGroupDef:
         self.elements = []
         self.sub = sub
 
-        self.ordering = {} # might want to make this an arg
+        self.ordering = {}  # might want to make this an arg
         for count, key in enumerate(self.generators.keys()):
             if count == 0:
                 prev_key = key[0]
@@ -131,7 +132,7 @@ class AbstractGroupDef:
     def _get_generator_order(self, generator):
         for each_generator, power in self.generators.keys():
             if generator == each_generator:
-                return power*self.generators[(each_generator, power)]
+                return power * self.generators[(each_generator, power)]
 
     def _reduce_term_exp(self, term: List[Tuple[str, int]]) -> List[Tuple[str, int]]:
         """
@@ -141,7 +142,9 @@ class AbstractGroupDef:
         for generator, power in term:
             if self._get_generator_order(generator) != 0:
                 if power % self._get_generator_order(generator) != 0:
-                    new_term.append((generator, power % self._get_generator_order(generator)))
+                    new_term.append(
+                        (generator, power % self._get_generator_order(generator))
+                    )
             else:  # only if generator's order is not known
                 new_term.append((generator, power))
 
@@ -154,13 +157,6 @@ class AbstractGroupDef:
         a_normalized = self.normalize(a)
         b_normalized = self.normalize(b)
 
-
-        # if collections.Counter(a_normalized) == collections.Counter(b_normalized):
-        #     return True
-        # else:
-        #     return False
-
-        # Alternate naive implementation
         if len(a_normalized) != len(b_normalized):
             return False
 
@@ -199,7 +195,11 @@ class AbstractGroupDef:
                 not self.check_identity(right_elm)
             ):
                 new_elm = self.normalize(
-                    self.normalize(self.multiply(self.normalize(left_elm), self.normalize(right_elm)))
+                    self.normalize(
+                        self.multiply(
+                            self.normalize(left_elm), self.normalize(right_elm)
+                        )
+                    )
                 )  # should not need so much wrapping, TODO: test and remove
 
                 for each_elm in self.elements:
@@ -213,6 +213,7 @@ class AbstractGroup(AbstractGroupDef):
     """
     Higher order group functions
     """
+
     def __eq__(self, other) -> bool:
         if len(self.generators.keys()) != len(self.generators.keys()):
             return False
@@ -230,7 +231,6 @@ class AbstractGroup(AbstractGroupDef):
                     return False
             except:
                 return False
-
 
         if len(other.enumerate()) != len(self.enumerate()):
             return False
@@ -251,7 +251,9 @@ class AbstractGroup(AbstractGroupDef):
         current_term = self.normalize(self.pow(copy.deepcopy(starting_term), 2))
         while not self.compare(current_term, starting_term):
             order += 1
-            current_term = self.normalize(self.multiply(current_term, copy.deepcopy(starting_term)))
+            current_term = self.normalize(
+                self.multiply(current_term, copy.deepcopy(starting_term))
+            )
 
         return order
 
@@ -260,16 +262,16 @@ class AbstractGroup(AbstractGroupDef):
         Finds the inverse of an element
         """
         order = self.order(term)
-        return self.normalize(self.pow(term, order-1))
+        return self.normalize(self.pow(term, order - 1))
 
-    def enumerate(self, remove_dups = True) -> List[List[Tuple[str, int]]]:
+    def enumerate(self, remove_dups=True) -> List[List[Tuple[str, int]]]:
         """
         Enumerate all elements. Returns a list of all elements.
         """
         prev_size = -1
 
-        self.elements.append([]) # identity!
-        if not self.sub: # get the full group
+        self.elements.append([])  # identity!
+        if not self.sub:  # get the full group
             for generator, power in self.generators.keys():
                 self.elements.append([(generator, power)])
 
@@ -288,7 +290,7 @@ class AbstractGroup(AbstractGroupDef):
         Membership function equipped with the group/set.
         """
         if cache:
-            for each_elm in self.elements: # TODO: speedup and prefer enumerate
+            for each_elm in self.elements:  # TODO: speedup and prefer enumerate
                 if self.compare(each_elm, term):
                     return True
         else:
@@ -334,7 +336,9 @@ class AbstractGroup(AbstractGroupDef):
             #     continue
 
             # Construct subgroup
-            subgroup = AbstractGroup(copy.deepcopy(self.generators), copy.deepcopy(self.rewrite), sub=True)
+            subgroup = AbstractGroup(
+                copy.deepcopy(self.generators), copy.deepcopy(self.rewrite), sub=True
+            )
             subgroup.elements = [normal_elm]
 
             for each_subgroup in subgroups:
@@ -365,11 +369,10 @@ class AbstractGroup(AbstractGroupDef):
                         seen = True
                         break
                 else:
-                    for each_seen_term in conjugacy_class: # maybe combine this
+                    for each_seen_term in conjugacy_class:  # maybe combine this
                         if self.compare(conjugated_elm, each_seen_term):
                             unique = False
                             break
-
 
                 if seen:
                     break
@@ -384,7 +387,9 @@ class AbstractGroup(AbstractGroupDef):
 
         return conjugacy_classes
 
-    def conjugate(self, a: List[Tuple[str, int]], b: List[Tuple[str, int]]) -> List[Tuple[str, int]]:
+    def conjugate(
+        self, a: List[Tuple[str, int]], b: List[Tuple[str, int]]
+    ) -> List[Tuple[str, int]]:
         """
         Conjugates a by b. Returns bab^-1.
         """
@@ -395,7 +400,9 @@ class AbstractGroup(AbstractGroupDef):
         Calculates if subgroup is normal. subgroup should be an instance of AbstractGroup.
         """
         if not (subgroup.sub is True and self.sub is False):
-            raise ValueError("You need to call is_normal_subgroup on a group and pass a subgroup!")
+            raise ValueError(
+                "You need to call is_normal_subgroup on a group and pass a subgroup!"
+            )
 
         normal = True
         for each_elm in subgroup.enumerate():

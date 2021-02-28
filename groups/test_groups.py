@@ -31,17 +31,20 @@ def test_enmuerate():
     group = AbstractGroup()
     assert group.enumerate()
 
+
 def test_order_a_b():
     group = AbstractGroup()
     assert group.order([("a", 1)]) == 2
     assert group.order([("b", 1)]) == 8
     assert group.order([("a", 3), ("b", 3)]) == 2
 
+
 def test_subgroups():
     group = AbstractGroup()
     assert len(group.enumerate_subgroups()) == 12
     for each_group in group.enumerate_subgroups():
         assert [] in each_group.enumerate()
+
 
 def exists_test_normal_subgroups():
     group = AbstractGroup()
@@ -52,11 +55,13 @@ def exists_test_normal_subgroups():
 
     assert counter == 4
 
+
 def test_inverse():
     group = AbstractGroup()
     for each_elm in group.enumerate():
         print(each_elm)
-        assert group.normalize(group.multiply(group.inverse(each_elm),each_elm)) == []
+        assert group.normalize(group.multiply(group.inverse(each_elm), each_elm)) == []
+
 
 def test_pow():
     group = AbstractGroup()
@@ -72,10 +77,12 @@ def test_pow():
     assert group.pow([("b", 2)], 2) == [("b", 4)]
     assert group.pow([("b", 2)], 5) == [("b", 2)]
 
+
 def test_contains():
     group = AbstractGroup()
     for each_elm in group.enumerate():
         assert group.contains(each_elm)
+
 
 def test_conjugacy_classes():
     group = AbstractGroup()
