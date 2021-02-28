@@ -33,4 +33,9 @@ To normalize/simplify an element to its simplest form you can do
 group.normalize(term_1)
 ```
 
-Voila -- some basic group stuff!
+To get the inverse of an element, you can do
+``` python
+group.inverse(term_1)
+```
+
+Voila -- some basic group stuff! More basic group operations are used in [`examples/d16.py`](/examples/d16.py)
