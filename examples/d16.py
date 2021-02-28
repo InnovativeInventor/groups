@@ -9,3 +9,8 @@ if __name__ == "__main__":
     for each_elm in elements:
         print(f"{group.format(each_elm)} has order {group.order(each_elm)}")
     print("Order of the entire group:", len(elements))
+
+    # Enumerate subgroups
+    subgroups = group.enumerate_subgroups()
+    for each_subgroup in subgroups:
+        print(each_subgroup.enumerate(sub=True))

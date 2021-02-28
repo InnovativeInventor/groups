@@ -24,11 +24,10 @@ class AbstractGroupDef:
         Rewrite rules are for rewriting/reducing expressions.
         """
         self.generators = generators
-        self.elm_ordering = list([x[0] for x in self.generators.keys()])
         self.rewrite = rewrite
         self.elements = []
 
-        self.ordering = {}
+        self.ordering = {} # might want to make this an arg
         for count, key in enumerate(self.generators.keys()):
             if count == 0:
                 prev_key = key[0]
@@ -217,14 +216,14 @@ class AbstractGroupDef:
                 not self.check_identity(right_elm)
             ):
                 new_elm = self.normalize(
-                    self.normalize(self.multiply(list(left_elm), list(right_elm)))
-                )
+                    self.normalize(self.multiply(self.normalize(left_elm), self.normalize(right_elm)))
+                )  # should not need so much wrapping, TODO: test and remove
 
                 for each_elm in self.elements:
                     if self.compare(new_elm, each_elm):
                         break
                 else:
-                    self.elements.append(new_elm)
+                    self.elements.append(self.normalize(new_elm))
 
 class AbstractGroup(AbstractGroupDef):
     """
@@ -237,31 +236,39 @@ class AbstractGroup(AbstractGroupDef):
         """
         starting_term = self.normalize(copy.deepcopy(term))
 
-        term = self.normalize(self.multiply(term, starting_term))
         order = 1
-        while term != starting_term:
-            term = self.normalize(self.multiply(term, starting_term))
+        current_term = self.normalize(self.pow(copy.deepcopy(starting_term), 2))
+        while not self.compare(current_term, starting_term):
             order += 1
+            current_term = self.normalize(self.multiply(current_term, copy.deepcopy(starting_term)))
 
         return order
 
-    def enumerate(self) -> List[List[Tuple[str, int]]]:
+    def enumerate(self, sub = False, remove_dups = True) -> List[List[Tuple[str, int]]]:
         """
         Enumerate all elements. Returns a list of all elements.
         """
         prev_size = -1
 
         self.elements.append([]) # identity!
-        for generator, power in self.generators.keys():
-            self.elements.append([(generator, power)])
+        if not sub: # get the full group
+            for generator, power in self.generators.keys():
+                self.elements.append([(generator, power)])
 
         while prev_size != len(self.elements):
             prev_size = len(self.elements)
             self._close_group()
         self._close_group()
 
+        if remove_dups:
+            self.remove_dups()
 
-        # Remove dups, horribly inefficient
+        return self.elements
+
+    def remove_dups(self):
+        """
+        Remove dups in element list
+        """
         dups_exist = True
         while dups_exist:
             dups_exist = False
@@ -271,12 +278,33 @@ class AbstractGroup(AbstractGroupDef):
                         dups_exist = True
                         break
 
-                if dups_exist:
-                    del self.elements[i]
-                    break
+            if dups_exist:
+                del self.elements[i]
+                break
 
-        return self.elements
+    def enumerate_subgroups(self) -> list:
+        """
+        Currently broken
+        """
+        subgroups = []
+        for each_elm in self.enumerate():
+            normal_elm = self.normalize(each_elm)
+            seen = False
+            for each_subgroup in subgroups: # check if already seen
+                for each_subgroup_elm in each_subgroup.enumerate(sub=True, remove_dups=True):
+                    if self.compare(normal_elm, self.normalize(each_subgroup_elm)):
+                        seen = True
+                # if seen:
+                #     break
 
-    # def enumerate_subgroups(self) -> List[AbstractGroup]:
-    #     for each_elm in self.enumerate():
-    #         if
+            if seen:  # skip if identity as well
+                continue
+
+            # Construct subgroup
+            subgroup = AbstractGroup(copy.deepcopy(self.generators), copy.deepcopy(self.rewrite))
+            subgroup.elements = [normal_elm]
+
+            subgroups.append(subgroup)
+            # breakpoint()
+
+        return subgroups

@@ -35,3 +35,10 @@ def test_order_a_b():
     group = AbstractGroup()
     assert group.order([("a", 1)]) == 2
     assert group.order([("b", 1)]) == 8
+    assert group.order([("a", 3), ("b", 3)]) == 2
+
+def test_subgroups():
+    group = AbstractGroup()
+    assert len(group.enumerate_subgroups()) == 10
+    for each_group in group.enumerate_subgroups():
+        assert [] in each_group.enumerate(sub=True)
