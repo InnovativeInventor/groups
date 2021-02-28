@@ -38,4 +38,6 @@ To get the inverse of an element, you can do
 group.inverse(term_1)
 ```
 
-Voila -- some basic group stuff! More basic group operations are used in [`examples/d16.py`](/examples/d16.py)
+Voila -- some basic group stuff! 
+More basic group operations (subgroups, conjugacy classes, normal subgroups, etc.) are used in [`examples/d16.py`](/examples/d16.py)
+Tests are in [`groups/test_groups.py`](groups/test_groups.py)
