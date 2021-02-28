@@ -1,4 +1,6 @@
 ## Groups
+[![Tests](https://github.com/InnovativeInventor/groups/actions/workflows/test-lint.yaml/badge.svg)](https://github.com/InnovativeInventor/groups/actions/workflows/test-lint.yaml)
+
 Representing certain kinds of finite groups in terms of generators and rewrite rules. 
 Work in progress. 
 This is probably not the best way to represent groups, but whatever.
