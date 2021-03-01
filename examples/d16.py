@@ -1,9 +1,7 @@
 from groups import AbstractGroup
 
 if __name__ == "__main__":
-    group = AbstractGroup(
-        {"a": 2, "b": 8}, {(("b", 1), ("a", 1)): (("a", 1), ("b", 7))}
-    )  # default group
+    group = AbstractGroup()  # default group
 
     # Enumerate all elements
     elements = group.enumerate()
@@ -14,12 +12,16 @@ if __name__ == "__main__":
 
     # Enumerate subgroups
     subgroups = group.enumerate_subgroups()
-    print("\nEnumerating subgroups")
+    print("\nEnumerating subgroups:\n")
     for each_subgroup in subgroups:
-        print(each_subgroup.enumerate())
+        for each_elm in each_subgroup.enumerate():
+            print(group.format(each_elm), end = ", ")
+        print(f"Order: {len(each_subgroup.elements)}\n")
 
     # Enumerating normal subgroups
-    print("\nEnumerating normal subgroups")
+    print("\nEnumerating normal subgroups:\n")
     for each_subgroup in subgroups:
         if group.is_normal_subgroup(each_subgroup):
-            print(each_subgroup.enumerate())
+            for each_elm in each_subgroup.enumerate():
+                print(group.format(each_elm), end = ", ")
+            print(f"Order: {len(each_subgroup.elements)}\n")
