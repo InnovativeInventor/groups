@@ -15,7 +15,7 @@ if __name__ == "__main__":
     print("\nEnumerating subgroups:\n")
     for each_subgroup in subgroups:
         for each_elm in each_subgroup.enumerate():
-            print(group.format(each_elm), end = ", ")
+            print(group.format(each_elm), end=", ")
         print(f"Order: {len(each_subgroup.elements)}\n")
 
     # Enumerating normal subgroups
@@ -23,5 +23,5 @@ if __name__ == "__main__":
     for each_subgroup in subgroups:
         if group.is_normal_subgroup(each_subgroup):
             for each_elm in each_subgroup.enumerate():
-                print(group.format(each_elm), end = ", ")
+                print(group.format(each_elm), end=", ")
             print(f"Order: {len(each_subgroup.elements)}\n")
