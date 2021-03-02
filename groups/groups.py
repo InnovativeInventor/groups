@@ -183,7 +183,7 @@ class AbstractGroupDef:
         for generator, power in term:
             if power:
                 if latex:
-                    representation += f"{generator}^\{{power}\}"
+                    representation += f"{generator}" + "^{" + str(power) + "}"
                 else:
                     representation += f"{generator}^{power}"
 
