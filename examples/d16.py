@@ -25,3 +25,10 @@ if __name__ == "__main__":
             for each_elm in each_subgroup.enumerate():
                 print(group.format(each_elm), end=", ")
             print(f"Order: {len(each_subgroup.elements)}\n")
+            
+    # Enumerating conjugacy classes
+    print("\nEnumerating conjugacy classes:\n")
+    for each_class in group.enumerate_conjugacy_classes():
+        for each_elm in each_class:
+            print(group.format(each_elm), end=", ")
+        print(f"Size: {len(each_class)}\n")

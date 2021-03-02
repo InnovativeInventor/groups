@@ -382,7 +382,6 @@ class AbstractGroup(AbstractGroupDef):
             if seen:  # since conjugacy classes partition
                 continue
             else:
-                print(conjugacy_class)
                 conjugacy_classes.append(conjugacy_class)
 
         return conjugacy_classes
