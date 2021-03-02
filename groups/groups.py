@@ -175,14 +175,17 @@ class AbstractGroupDef:
                 return False
         return True
 
-    def format(self, term: List[Tuple[str, int]]):
+    def format(self, term: List[Tuple[str, int]], latex=False):
         if len(term) == 0:
             return "e"
 
         representation = ""
         for generator, power in term:
             if power:
-                representation += f"{generator}^{power}"
+                if latex:
+                    representation += f"{generator}^\{{power}\}"
+                else:
+                    representation += f"{generator}^{power}"
 
         return representation
 
